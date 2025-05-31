@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ping Pong Game</title>
+  <title>Ping Pong Game 2.5D</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #111; overflow: hidden; font-family: 'Arial', sans-serif; }
+    body { background: #000; overflow: hidden; font-family: 'Arial', sans-serif; }
     canvas {
       display: block;
       margin: 30px auto;
-      background: radial-gradient(circle at center, #333 0%, #111 100%);
+      background: linear-gradient(to bottom, #222 0%, #111 100%);
       border: 3px solid #0f0;
       box-shadow: 0 0 20px #0f0;
     }
@@ -30,25 +30,40 @@
     let ballSpeedX = 5, ballSpeedY = 5;
     let playerScore = 0, aiScore = 0;
 
-    function drawPaddle(x, y) {
-      const gradient = ctx.createLinearGradient(x, y, x + paddleWidth, y + paddleHeight);
-      gradient.addColorStop(0, '#00ffcc');
-      gradient.addColorStop(1, '#0066ff');
-      ctx.fillStyle = gradient;
+    // Sounds
+    const bounceSound = new Audio("data:audio/wav;base64,UklGRhYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YRAAAAAA");
+    const scoreSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAAA");
+
+    function drawPaddle(x, y, isRight) {
+      const depth = 6;
+      ctx.fillStyle = isRight ? '#00ccff' : '#00ff88';
+      for (let i = depth; i > 0; i--) {
+        ctx.fillRect(x - i, y - i, paddleWidth, paddleHeight);
+        ctx.globalAlpha = 1 - i * 0.15;
+      }
+      ctx.globalAlpha = 1;
       ctx.fillRect(x, y, paddleWidth, paddleHeight);
-      ctx.strokeStyle = '#0ff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, paddleWidth, paddleHeight);
     }
 
     function drawBall(x, y) {
-      const gradient = ctx.createRadialGradient(x + ballSize/2, y + ballSize/2, 2, x + ballSize/2, y + ballSize/2, ballSize);
+      const gradient = ctx.createRadialGradient(x + ballSize / 2, y + ballSize / 2, 2, x + ballSize / 2, y + ballSize / 2, ballSize);
       gradient.addColorStop(0, '#ffffff');
-      gradient.addColorStop(1, '#ff0066');
+      gradient.addColorStop(1, '#ff00cc');
       ctx.fillStyle = gradient;
       ctx.beginPath();
-      ctx.arc(x + ballSize/2, y + ballSize/2, ballSize / 2, 0, Math.PI * 2);
+      ctx.arc(x + ballSize / 2, y + ballSize / 2, ballSize / 2, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    function drawFloor() {
+      ctx.strokeStyle = "#0f0";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < canvas.width; i += 40) {
+        ctx.beginPath();
+        ctx.moveTo(i, canvas.height);
+        ctx.lineTo(canvas.width / 2, canvas.height - 80);
+        ctx.stroke();
+      }
     }
 
     function drawText(text, x, y) {
@@ -67,8 +82,9 @@
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawPaddle(0, playerY);
-      drawPaddle(canvas.width - paddleWidth, aiY);
+      drawFloor();
+      drawPaddle(0, playerY, false);
+      drawPaddle(canvas.width - paddleWidth, aiY, true);
       drawBall(ballX, ballY);
       drawText(playerScore, canvas.width / 4, 50);
       drawText(aiScore, (3 * canvas.width) / 4, 50);
@@ -78,16 +94,36 @@
       ballX += ballSpeedX;
       ballY += ballSpeedY;
 
-      if (ballY <= 0 || ballY + ballSize >= canvas.height) ballSpeedY *= -1;
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+        ballSpeedY *= -1;
+        bounceSound.currentTime = 0;
+        bounceSound.play();
+      }
 
       if (ballX <= paddleWidth) {
-        if (ballY + ballSize >= playerY && ballY <= playerY + paddleHeight) ballSpeedX *= -1;
-        else { aiScore++; resetBall(); }
+        if (ballY + ballSize >= playerY && ballY <= playerY + paddleHeight) {
+          ballSpeedX *= -1;
+          bounceSound.currentTime = 0;
+          bounceSound.play();
+        } else {
+          aiScore++;
+          scoreSound.currentTime = 0;
+          scoreSound.play();
+          resetBall();
+        }
       }
 
       if (ballX + ballSize >= canvas.width - paddleWidth) {
-        if (ballY + ballSize >= aiY && ballY <= aiY + paddleHeight) ballSpeedX *= -1;
-        else { playerScore++; resetBall(); }
+        if (ballY + ballSize >= aiY && ballY <= aiY + paddleHeight) {
+          ballSpeedX *= -1;
+          bounceSound.currentTime = 0;
+          bounceSound.play();
+        } else {
+          playerScore++;
+          scoreSound.currentTime = 0;
+          scoreSound.play();
+          resetBall();
+        }
       }
 
       const aiCenter = aiY + paddleHeight / 2;

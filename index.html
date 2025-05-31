@@ -14,13 +14,42 @@
       border: 3px solid #0f0;
       box-shadow: 0 0 20px #0f0;
     }
+    #menu {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #0f0;
+      background: rgba(0, 0, 0, 0.9);
+      padding: 30px;
+      border: 2px solid #0f0;
+      text-align: center;
+      z-index: 10;
+      display: none;
+    }
+    #menu button {
+      background: #0f0;
+      border: none;
+      padding: 10px 20px;
+      color: #000;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
+  <div id="menu">
+    <h1>Ping Pong 2.5D</h1>
+    <p>Press [P] or click below to Play/Pause</p>
+    <button onclick="togglePause()">Resume Game</button>
+  </div>
   <canvas id="gameCanvas" width="800" height="500"></canvas>
   <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const menu = document.getElementById('menu');
 
     const paddleWidth = 12, paddleHeight = 100;
     const ballSize = 12;
@@ -29,10 +58,18 @@
     let ballX = canvas.width / 2, ballY = canvas.height / 2;
     let ballSpeedX = 5, ballSpeedY = 5;
     let playerScore = 0, aiScore = 0;
+    let paused = false;
 
     // Sounds
-    const bounceSound = new Audio("data:audio/wav;base64,UklGRhYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YRAAAAAA");
-    const scoreSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQAAAAAA");
+    const bounceSound = new Audio();
+    bounceSound.src = URL.createObjectURL(new Blob([
+      atob("UklGRlIAAABXQVZFZm10IBAAAAABAAEAgD4AAIA+AAABAAgAZGF0YQAAAAA=")
+    ], { type: 'audio/wav' }));
+
+    const scoreSound = new Audio();
+    scoreSound.src = URL.createObjectURL(new Blob([
+      atob("UklGRlIAAABXQVZFZm10IBAAAAABAAEAgD4AAIA+AAABAAgAZGF0YQAAAAA=")
+    ], { type: 'audio/wav' }));
 
     function drawPaddle(x, y, isRight) {
       const depth = 6;
@@ -91,6 +128,8 @@
     }
 
     function update() {
+      if (paused) return;
+
       ballX += ballSpeedX;
       ballY += ballSpeedY;
 
@@ -132,16 +171,26 @@
     }
 
     function game() {
-      update();
+      if (!paused) update();
       draw();
+      requestAnimationFrame(game);
     }
 
-    setInterval(game, 1000 / 60);
+    function togglePause() {
+      paused = !paused;
+      menu.style.display = paused ? 'block' : 'none';
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'p' || e.key === 'P') togglePause();
+    });
 
     canvas.addEventListener("mousemove", function(evt) {
       const rect = canvas.getBoundingClientRect();
       playerY = evt.clientY - rect.top - paddleHeight / 2;
     });
+
+    game();
   </script>
 </body>
 </html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ping Pong Game</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; overflow: hidden; font-family: 'Arial', sans-serif; }
+    canvas { display: block; margin: 30px auto; background: url('https://i.imgur.com/VzKkZBI.png') center/cover; border: 2px solid #fff; box-shadow: 0 0 20px #0f0; }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const paddleWidth = 10, paddleHeight = 100;
+    const ballSize = 10;
+    let playerY = canvas.height / 2 - paddleHeight / 2;
+    let aiY = canvas.height / 2 - paddleHeight / 2;
+    let ballX = canvas.width / 2, ballY = canvas.height / 2;
+    let ballSpeedX = 5, ballSpeedY = 5;
+    let playerScore = 0, aiScore = 0;
+
+    const sprite = new Image();
+    sprite.src = 'https://i.imgur.com/Ig6dL7O.png'; // Sprite with paddle and ball
+
+    function drawSprite(img, sx, sy, sw, sh, dx, dy, dw, dh) {
+      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
+
+    function drawText(text, x, y) {
+      ctx.fillStyle = "#0f0";
+      ctx.font = "bold 36px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(text, x, y);
+    }
+
+    function resetBall() {
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+      ballSpeedX = -ballSpeedX;
+      ballSpeedY = 5 * (Math.random() > 0.5 ? 1 : -1);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawSprite(sprite, 0, 0, 16, 64, 0, playerY, paddleWidth, paddleHeight);
+      drawSprite(sprite, 0, 0, 16, 64, canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight);
+      drawSprite(sprite, 32, 0, 16, 16, ballX, ballY, ballSize, ballSize);
+      drawText(playerScore, canvas.width / 4, 40);
+      drawText(aiScore, (3 * canvas.width) / 4, 40);
+    }
+
+    function update() {
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
+
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) ballSpeedY *= -1;
+
+      if (ballX <= paddleWidth) {
+        if (ballY > playerY && ballY < playerY + paddleHeight) ballSpeedX *= -1;
+        else { aiScore++; resetBall(); }
+      }
+
+      if (ballX + ballSize >= canvas.width - paddleWidth) {
+        if (ballY > aiY && ballY < aiY + paddleHeight) ballSpeedX *= -1;
+        else { playerScore++; resetBall(); }
+      }
+
+      const aiCenter = aiY + paddleHeight / 2;
+      if (aiCenter < ballY - 35) aiY += 5;
+      else if (aiCenter > ballY + 35) aiY -= 5;
+    }
+
+    function game() {
+      update();
+      draw();
+    }
+
+    setInterval(game, 1000 / 60);
+
+    canvas.addEventListener("mousemove", function(evt) {
+      const rect = canvas.getBoundingClientRect();
+      playerY = evt.clientY - rect.top - paddleHeight / 2;
+    });
+  </script>
+</body>
+</html>

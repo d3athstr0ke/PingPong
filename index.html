@@ -7,7 +7,13 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111; overflow: hidden; font-family: 'Arial', sans-serif; }
-    canvas { display: block; margin: 30px auto; background: url('https://i.imgur.com/VzKkZBI.png') center/cover; border: 2px solid #fff; box-shadow: 0 0 20px #0f0; }
+    canvas {
+      display: block;
+      margin: 30px auto;
+      background: radial-gradient(circle at center, #333 0%, #111 100%);
+      border: 3px solid #0f0;
+      box-shadow: 0 0 20px #0f0;
+    }
   </style>
 </head>
 <body>
@@ -16,19 +22,33 @@
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
 
-    const paddleWidth = 10, paddleHeight = 100;
-    const ballSize = 10;
+    const paddleWidth = 12, paddleHeight = 100;
+    const ballSize = 12;
     let playerY = canvas.height / 2 - paddleHeight / 2;
     let aiY = canvas.height / 2 - paddleHeight / 2;
     let ballX = canvas.width / 2, ballY = canvas.height / 2;
     let ballSpeedX = 5, ballSpeedY = 5;
     let playerScore = 0, aiScore = 0;
 
-    const sprite = new Image();
-    sprite.src = 'https://i.imgur.com/Ig6dL7O.png'; // Sprite with paddle and ball
+    function drawPaddle(x, y) {
+      const gradient = ctx.createLinearGradient(x, y, x + paddleWidth, y + paddleHeight);
+      gradient.addColorStop(0, '#00ffcc');
+      gradient.addColorStop(1, '#0066ff');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, y, paddleWidth, paddleHeight);
+      ctx.strokeStyle = '#0ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, paddleWidth, paddleHeight);
+    }
 
-    function drawSprite(img, sx, sy, sw, sh, dx, dy, dw, dh) {
-      ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+    function drawBall(x, y) {
+      const gradient = ctx.createRadialGradient(x + ballSize/2, y + ballSize/2, 2, x + ballSize/2, y + ballSize/2, ballSize);
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(1, '#ff0066');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x + ballSize/2, y + ballSize/2, ballSize / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     function drawText(text, x, y) {
@@ -47,11 +67,11 @@
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawSprite(sprite, 0, 0, 16, 64, 0, playerY, paddleWidth, paddleHeight);
-      drawSprite(sprite, 0, 0, 16, 64, canvas.width - paddleWidth, aiY, paddleWidth, paddleHeight);
-      drawSprite(sprite, 32, 0, 16, 16, ballX, ballY, ballSize, ballSize);
-      drawText(playerScore, canvas.width / 4, 40);
-      drawText(aiScore, (3 * canvas.width) / 4, 40);
+      drawPaddle(0, playerY);
+      drawPaddle(canvas.width - paddleWidth, aiY);
+      drawBall(ballX, ballY);
+      drawText(playerScore, canvas.width / 4, 50);
+      drawText(aiScore, (3 * canvas.width) / 4, 50);
     }
 
     function update() {
@@ -61,12 +81,12 @@
       if (ballY <= 0 || ballY + ballSize >= canvas.height) ballSpeedY *= -1;
 
       if (ballX <= paddleWidth) {
-        if (ballY > playerY && ballY < playerY + paddleHeight) ballSpeedX *= -1;
+        if (ballY + ballSize >= playerY && ballY <= playerY + paddleHeight) ballSpeedX *= -1;
         else { aiScore++; resetBall(); }
       }
 
       if (ballX + ballSize >= canvas.width - paddleWidth) {
-        if (ballY > aiY && ballY < aiY + paddleHeight) ballSpeedX *= -1;
+        if (ballY + ballSize >= aiY && ballY <= aiY + paddleHeight) ballSpeedX *= -1;
         else { playerScore++; resetBall(); }
       }
 
